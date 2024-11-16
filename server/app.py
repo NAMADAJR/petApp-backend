@@ -8,8 +8,8 @@ import uuid
 
 app = Flask(__name__)
 CORS(app)
-#create db using postgresql
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:joshualee087@localhost/petApp'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///petApp.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'qwerty123456716253e'
 
@@ -17,6 +17,10 @@ db.init_app(app)
 CORS(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
+
+@app.route('/')
+def index():
+    return "Pet App Database"
 
 @app.route('/register', methods=['POST'])
 def register():
