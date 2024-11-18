@@ -8,10 +8,10 @@ import uuid
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///petApp.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = True
 app.config['JWT_SECRET_KEY'] = 'qwerty123456716253e'
 
 db.init_app(app)
@@ -246,8 +246,9 @@ def appointment():
     user_id = get_jwt_identity()
     pet_id = data['pet_id']
     date = data['date']
+    date = datetime.strptime(date, '%Y-%m-%d').date()
     time = data['time']
-    time=datetime.strptime(data['time'], '%Y-%m-%d')
+    time=datetime.strptime(data['time'], '%H:%M')
     notes = data['notes']
 
     appointment = Appointment(id=appointment_id, user_id=user_id, pet_id=pet_id, date=date, time=time, notes=notes)
@@ -284,6 +285,7 @@ def appointment_detail(appointment_id):
         appointment
         appointment.date = data['date']
         appointment.time = data['time']
+        
         appointment.notes = data['notes']
         db.session.commit()
         return jsonify({'message': 'Appointment updated successfully'}), 200
@@ -457,5 +459,5 @@ def create_activity_record():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=7500, debug=True)
     db.create_all()
