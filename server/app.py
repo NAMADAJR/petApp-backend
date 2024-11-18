@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_migrate import Migrate
 import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -27,9 +28,10 @@ def register():
     data = request.get_json()
     username = data['username']
     email = data['email']
+    image = data['image']
     password = generate_password_hash(data['password'])
 
-    user = User(id=str(uuid.uuid4()), name=username, email=email, password=password)
+    user = User(id=str(uuid.uuid4()), name=username, email=email, image=image, password=password)
     db.session.add(user)
     db.session.commit()
     return jsonify({'message': 'User registered successfully'}), 201
@@ -64,8 +66,10 @@ def add_pet():
     breed = data['breed']
     gender = data['gender']
     date_of_birth = data['date_of_birth']
+    date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d')
+    owner_id = get_jwt_identity()
 
-    pet = Pet(id=pet_id, name=name, type=type, breed=breed, gender=gender, date_of_birth=date_of_birth)
+    pet = Pet(id=pet_id, name=name, type=type, breed=breed, gender=gender, owner_id=owner_id, date_of_birth=date_of_birth)
     db.session.add(pet)
     db.session.commit()
     return jsonify({'message': 'Pet added successfully'}), 201
@@ -111,7 +115,8 @@ def update_pet(pet_id):
     pet.type = data['type']
     pet.breed = data['breed']
     pet.gender = data['gender']
-    pet.date_of_birth = data['date_of_birth']
+    date_of_birth = data['date_of_birth']
+    pet.date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d')
 
     db.session.commit()
     return jsonify({'message': 'Pet updated successfully'}), 200
@@ -139,6 +144,7 @@ def add_health_record(pet_id):
     type = data['type']
     description = data['description']
     date = data['date']
+    date = datetime.strptime(data['date'], '%Y-%m-%d')
     veterinary = data['veterinary']
     notes = data['notes']
 
@@ -199,6 +205,7 @@ def update_health_record(pet_id, health_record_id):
     health_record.type = data['type']
     health_record.description = data['description']
     health_record.date = data['date']
+    health_record.date=datetime.strptime(data['date'], '%Y-%m-%d')
     health_record.veterinary = data['veterinary']
     health_record.notes = data['notes']
 
@@ -240,6 +247,7 @@ def appointment():
     pet_id = data['pet_id']
     date = data['date']
     time = data['time']
+    time=datetime.strptime(data['time'], '%Y-%m-%d')
     notes = data['notes']
 
     appointment = Appointment(id=appointment_id, user_id=user_id, pet_id=pet_id, date=date, time=time, notes=notes)
