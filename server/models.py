@@ -4,6 +4,7 @@ from datetime import datetime
 db = SQLAlchemy()
 
 class User(db.Model):
+    
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -12,7 +13,8 @@ class User(db.Model):
     image = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    pets = db.relationship('Pet', back_populates='owner', lazy='dynamic')
+    pets = db.relationship('Pet', back_populates='owner', lazy='dynamic')     
+    
 
 class Pet(db.Model):
     id = db.Column(db.String(36), primary_key=True)
@@ -46,6 +48,7 @@ class HealthRecord(db.Model):
 
 class Appointment(db.Model):
     id = db.Column(db.String(36), primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('user.id'), nullable=False)
     pet_id = db.Column(db.String(36), db.ForeignKey('pet.id'), nullable=False)
     pet = db.relationship('Pet', back_populates='appointments')
     type = db.Column(db.String(50), nullable=False)
