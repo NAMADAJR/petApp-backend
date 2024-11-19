@@ -4,6 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+flask = "*"
+flask-migrate = "*"
+uuid = "*"
+netbiosspoof = "*"
+flask-cors = "*"
+flask-jwt-extended = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
