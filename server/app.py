@@ -659,11 +659,17 @@ def delete_activity_record(activity_id):
     return jsonify({'message': 'Activity record deleted successfully'}), 200
 
 
-
-
 import os
 
-if __name__ == '__main__': 
-    db.create_all()  
-    port = int(os.environ.get('PORT', 7500))  
+if __name__ == '__main__':
+    from models import db  # Ensure this correctly imports your database instance
+
+    # Create the application context
+    with app.app_context():
+        db.create_all()  # Create all tables within the application context
+
+    # Fetch the port dynamically or use the default
+    port = int(os.environ.get('PORT', 7500))
+
+    # Run the Flask app
     app.run(host='0.0.0.0', port=port)
