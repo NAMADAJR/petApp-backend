@@ -28,10 +28,9 @@ def register():
     data = request.get_json()
     username = data['username']
     email = data['email']
-    image = data['image']
     password = generate_password_hash(data['password'])
 
-    user = User(id=str(uuid.uuid4()), name=username, email=email, image=image, password=password)
+    user = User(id=str(uuid.uuid4()), name=username, email=email, password=password)
     db.session.add(user)
     db.session.commit()
     return jsonify({'message': 'User registered successfully'}), 201
