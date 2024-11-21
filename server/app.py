@@ -6,23 +6,29 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from flask_migrate import Migrate
 import uuid
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
+# Configurations for the database and JWT
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///petApp.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['JWT_SECRET_KEY'] = 'qwerty123456716253e'
 
+# Initialize database, CORS, JWT, and migration
 db.init_app(app)
 CORS(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
 
+# Route for testing the app
 @app.route('/')
 def index():
     return "Pet App Database"
 
+# Route for user registration
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -35,6 +41,7 @@ def register():
     db.session.commit()
     return jsonify({'message': 'User registered successfully'}), 201
 
+# Route for user login
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -48,12 +55,71 @@ def login():
     access_token = create_access_token(identity=user.id)
     return jsonify({'access_token': access_token}), 200
 
+# Route for fetching the current user's profile
 @app.route('/me', methods=['GET'])
 @jwt_required()
 def get_user():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
-    return jsonify({'id': user.id, 'name': user.name, 'email': user.email})
+    return jsonify({'id': user.id, 'name': user.name, 'email': user.email, 'image': user.image})
+
+# Configurations for file uploads
+UPLOAD_FOLDER = 'uploads/images'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Function to check if the file extension is allowed
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Route for updating user information including profile image
+@app.route('/me', methods=['PUT'])
+@jwt_required()
+def update_user():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    data = request.form  # Using form data for file uploads
+    file = request.files.get('image')  # Retrieve the uploaded file
+
+    # Ensure the uploads/images directory exists
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+
+    # Check if a file is provided
+    if file:
+        # Validate file extension
+        if not allowed_file(file.filename):
+            return jsonify({'message': 'Invalid file type. Allowed types are: png, jpg, jpeg, gif.'}), 400
+
+        # Secure the file name to avoid directory traversal attacks
+        filename = secure_filename(file.filename)
+
+        # Save the file to the server
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        try:
+            file.save(file_path)  # Save the file to the disk
+            user.image = file_path  # Save the relative file path to the database
+        except Exception as e:
+            return jsonify({'message': f'Error saving image: {str(e)}'}), 500
+
+    # Optionally, update other fields like username or email
+    if 'username' in data:
+        user.name = data['username']
+    if 'email' in data:
+        user.email = data['email']
+    if 'password' in data:
+        user.password = generate_password_hash(data['password'])
+
+    db.session.commit()
+
+    return jsonify({'message': 'User information updated successfully'}), 200
+
 
 @app.route('/pets', methods=['POST'])
 @jwt_required()
