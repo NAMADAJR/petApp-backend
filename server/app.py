@@ -20,7 +20,16 @@ app.config['JWT_SECRET_KEY'] = 'qwerty123456716253e'
 
 # Initialize database, CORS, JWT, and migration
 db.init_app(app)
-CORS(app)
+allowed_origins = [
+    "https://pet-app-frontend.vercel.app/",
+    "http://localhost:5173"  # Allowing local development environment
+]
+
+cors = CORS(app, resources={
+    r"/*": {
+        "origins": allowed_origins
+    }
+})
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
 
