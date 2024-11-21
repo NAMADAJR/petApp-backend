@@ -92,3 +92,15 @@ class ActivityRecord(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Community(db.Model):
+    id = db.Column(db.String(36), primary_key=True)  # Unique ID
+    title = db.Column(db.String(200), nullable=False)  # Title of the post
+    description = db.Column(db.Text, nullable=False)  # Description of the post
+    comment = db.Column(db.Text)  # Comment section
+    picture = db.Column(db.String(255))  # URL of the picture
+    gif = db.Column(db.String(255))  # URL of the GIF
+    emoji = db.Column(db.String(50))  # Emoji as a string
+    likes = db.Column(db.Integer, default=0)  # Number of likes
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # Post creation time
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Last update time
