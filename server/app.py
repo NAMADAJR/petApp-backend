@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from flask_migrate import Migrate
 import uuid
 from datetime import datetime
+from flask import send_from_directory
 from werkzeug.utils import secure_filename
 import os
 
@@ -119,6 +120,18 @@ def update_user():
     db.session.commit()
 
     return jsonify({'message': 'User information updated successfully'}), 200
+
+# Route for accessing the user's profile image
+@app.route('/profile_image/<filename>', methods=['GET'])
+def get_profile_image(filename):
+    # Ensure the image exists in the uploads/images directory
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'message': 'Image not found'}), 404
+    
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 
 @app.route('/pets', methods=['POST'])
