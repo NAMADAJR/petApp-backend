@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from models import db, User, Pet, HealthRecord, Appointment, Vaccination, WeightRecord, ActivityRecord
+from models import db, User, Pet, HealthRecord, Appointment, Vaccination, WeightRecord, ActivityRecord, Community
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_migrate import Migrate
@@ -744,6 +744,114 @@ def delete_activity_record(activity_id):
     db.session.commit()
 
     return jsonify({'message': 'Activity record deleted successfully'}), 200
+
+@app.route('/community', methods=['POST'])
+def create_post():
+    """Create a new community post."""
+    data = request.get_json()
+    post = Community(
+        id=str(uuid.uuid4()),
+        title=data.get('title'),
+        description=data.get('description'),
+        comment=data.get('comment'),
+        picture=data.get('picture'),
+        gif=data.get('gif'),
+        emoji=data.get('emoji'),
+        likes=0
+    )
+    db.session.add(post)
+    db.session.commit()
+    return jsonify({'message': 'Community post created successfully', 'post': post.id}), 201
+
+
+@app.route('/community', methods=['GET'])
+def get_all_posts():
+    """Retrieve all community posts."""
+    posts = Community.query.all()
+    result = [
+        {
+            "id": post.id,
+            "title": post.title,
+            "description": post.description,
+            "comment": post.comment,
+            "picture": post.picture,
+            "gif": post.gif,
+            "emoji": post.emoji,
+            "likes": post.likes,
+            "created_at": post.created_at,
+            "updated_at": post.updated_at
+        }
+        for post in posts
+    ]
+    return jsonify(result), 200
+
+
+@app.route('/community/<post_id>', methods=['GET'])
+def get_post(post_id):
+    """Retrieve a specific community post by ID."""
+    post = Community.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    return jsonify({
+        "id": post.id,
+        "title": post.title,
+        "description": post.description,
+        "comment": post.comment,
+        "picture": post.picture,
+        "gif": post.gif,
+        "emoji": post.emoji,
+        "likes": post.likes,
+        "created_at": post.created_at,
+        "updated_at": post.updated_at
+    }), 200
+
+
+@app.route('/community/<post_id>', methods=['PUT'])
+def update_post(post_id):
+    """Update a specific community post."""
+    data = request.get_json()
+    post = Community.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    post.title = data.get('title', post.title)
+    post.description = data.get('description', post.description)
+    post.comment = data.get('comment', post.comment)
+    post.picture = data.get('picture', post.picture)
+    post.gif = data.get('gif', post.gif)
+    post.emoji = data.get('emoji', post.emoji)
+    post.updated_at = datetime.utcnow()
+
+    db.session.commit()
+    return jsonify({'message': 'Post updated successfully'}), 200
+
+
+@app.route('/community/<post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    """Delete a specific community post."""
+    post = Community.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({'message': 'Post deleted successfully'}), 200
+
+
+@app.route('/community/<post_id>/like', methods=['POST'])
+def like_post(post_id):
+    """Like a community post."""
+    post = Community.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    post.likes += 1
+    db.session.commit()
+    return jsonify({'message': 'Post liked successfully', 'likes': post.likes}), 200
+
+
+
 
 
 import os
