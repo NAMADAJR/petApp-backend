@@ -334,7 +334,7 @@ def appointment():
             }
             for appointment in appointments
         ]), 200
-    
+   
     if request.method == 'POST':
         data = request.get_json()
 
@@ -345,8 +345,8 @@ def appointment():
         date = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S')  
         location = data['location']
         status = data['status']
-        priority = data.get('priority') 
-        notes = data.get('notes') 
+        priority = data.get('priority')
+        notes = data.get('notes')
 
         appointment = Appointment(
             id=appointment_id,
@@ -363,6 +363,9 @@ def appointment():
         db.session.commit()
 
         return jsonify({'message': 'Appointment added successfully'}), 201
+
+
+   
 
 @app.route('/Appointment/<appointment_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
