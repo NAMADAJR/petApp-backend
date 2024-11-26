@@ -314,6 +314,35 @@ def delete_health_record(pet_id, health_record_id):
     db.session.commit()
     return jsonify({'message': 'Health record deleted successfully'}), 200
 
+@app.route('/Appointment', methods=['POST'])
+@jwt_required()
+def create_appointment():
+    user_id = get_jwt_identity()  # Get current user ID
+    data = request.get_json()
+
+    # Validate pet_id
+    pet = Pet.query.get(data.get('pet_id'))
+    if not pet:
+        return jsonify({'message': 'Invalid pet ID'}), 400
+
+    # Create the appointment
+    new_appointment = Appointment(
+        id=str(uuid4()),  # Generate unique ID
+        user_id=user_id,
+        pet_id=data['pet_id'],
+        type=data['type'],
+        date=datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S'),
+        location=data.get('vet'),  # Assuming "vet" as location
+        status="Pending",
+        priority=data.get('priority'),
+        notes=data.get('notes'),
+    )
+    db.session.add(new_appointment)
+    db.session.commit()
+
+    return jsonify({'message': 'Appointment created successfully'}), 201
+
+
 
 @app.route('/Appointment', methods=['GET', 'POST'])
 @jwt_required()
