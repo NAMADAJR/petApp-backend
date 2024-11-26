@@ -313,23 +313,22 @@ def delete_health_record(pet_id, health_record_id):
     db.session.delete(health_record)
     db.session.commit()
     return jsonify({'message': 'Health record deleted successfully'}), 200
-
 @app.route('/Appointment', methods=['POST'])
 @jwt_required()
 def create_appointment():
     user_id = get_jwt_identity()  # Get current user ID
     data = request.get_json()
 
-    # Validate pet_id
-    pet = Pet.query.get(data.get('pet_id'))
-    if not pet:
-        return jsonify({'message': 'Invalid pet ID'}), 400
+    # Validate pet_name
+    pet_name = data.get('pet_name')
+    if not pet_name:
+        return jsonify({'message': 'Pet name is required'}), 400
 
     # Create the appointment
     new_appointment = Appointment(
         id=str(uuid4()),  # Generate unique ID
         user_id=user_id,
-        pet_id=data['pet_id'],
+        pet_name=pet_name,  # Include pet_name
         type=data['type'],
         date=datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S'),
         location=data.get('vet'),  # Assuming "vet" as location
@@ -343,27 +342,25 @@ def create_appointment():
     return jsonify({'message': 'Appointment created successfully'}), 201
 
 
-
-@app.route('/Appointment', methods=['GET', 'POST'])
+@app.route('/Appointment', methods=['GET'])
 @jwt_required()
-def appointment():
-    if request.method == 'GET':
-        current_user_id = get_jwt_identity()
-        appointments = Appointment.query.filter_by(user_id=current_user_id).all()
-        return jsonify([
-            {
-                "id": appointment.id,
-                "pet_id": appointment.pet_id,
-                "type": appointment.type,
-                "date": appointment.date.isoformat(),
-                "location": appointment.location,
-                "status": appointment.status,
-                "priority": appointment.priority,
-                "notes": appointment.notes
-            }
-            for appointment in appointments
-        ]), 200
-    
+def get_appointments():
+    current_user_id = get_jwt_identity()
+    appointments = Appointment.query.filter_by(user_id=current_user_id).all()
+    return jsonify([
+        {
+            "id": appointment.id,
+            "pet_name": appointment.pet_name,  # Include pet_name
+            "type": appointment.type,
+            "date": appointment.date.isoformat(),
+            "location": appointment.location,
+            "status": appointment.status,
+            "priority": appointment.priority,
+            "notes": appointment.notes
+        }
+        for appointment in appointments
+    ]), 200
+
     if request.method == 'POST':
         data = request.get_json()
 
