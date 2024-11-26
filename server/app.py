@@ -313,61 +313,56 @@ def delete_health_record(pet_id, health_record_id):
     db.session.delete(health_record)
     db.session.commit()
     return jsonify({'message': 'Health record deleted successfully'}), 200
-@app.route('/Appointment', methods=['POST'])
+
+
+@app.route('/Appointment', methods=['GET', 'POST'])
 @jwt_required()
-def create_appointment():
-    user_id = get_jwt_identity()  # Get current user ID
-    data = request.get_json()
+def appointment():
+    if request.method == 'GET':
+        current_user_id = get_jwt_identity()
+        appointments = Appointment.query.filter_by(user_id=current_user_id).all()
+        return jsonify([
+            {
+                "id": appointment.id,
+                "pet_id": appointment.pet_id,
+                "type": appointment.type,
+                "date": appointment.date.isoformat(),
+                "location": appointment.location,
+                "status": appointment.status,
+                "priority": appointment.priority,
+                "notes": appointment.notes
+            }
+            for appointment in appointments
+        ]), 200
+   
+    if request.method == 'POST':
+        data = request.get_json()
 
-    # Validate required fields
-    pet_name = data.get('pet_name')
-    if not pet_name:
-        return jsonify({'message': 'Pet name is required'}), 400
+        appointment_id = str(uuid.uuid4())
+        user_id = get_jwt_identity()
+        pet_id = data['pet_id']
+        type_ = data['type']
+        date = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S')  
+        location = data['location']
+        status = data['status']
+        priority = data.get('priority')
+        notes = data.get('notes')
 
-    try:
-        # Parse date and ensure it's valid
-        date = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S')
-    except (KeyError, ValueError):
-        return jsonify({'message': 'Invalid or missing date. Use format "YYYY-MM-DDTHH:MM:SS"'}), 400
+        appointment = Appointment(
+            id=appointment_id,
+            user_id=user_id,
+            pet_id=pet_id,
+            type=type_,
+            date=date,
+            location=location,
+            status=status,
+            priority=priority,
+            notes=notes
+        )
+        db.session.add(appointment)
+        db.session.commit()
 
-    # Create the appointment
-    new_appointment = Appointment(
-        id=str(uuid.uuid4()),  # Generate unique ID
-        user_id=user_id,
-        pet_name=pet_name,
-        type=data['type'],
-        date=date,
-        location=data.get('location', 'Unknown'),  # Default to "Unknown" if location is missing
-        status=data.get('status', 'Pending'),  # Default to "Pending"
-        priority=data.get('priority'),
-        notes=data.get('notes'),
-    )
-
-    db.session.add(new_appointment)
-    db.session.commit()
-
-    return jsonify({'message': 'Appointment created successfully'}), 201
-
-
-
-@app.route('/Appointment', methods=['GET'])
-@jwt_required()
-def get_appointments():
-    current_user_id = get_jwt_identity()
-    appointments = Appointment.query.filter_by(user_id=current_user_id).all()
-    return jsonify([
-        {
-            "id": appointment.id,
-            "pet_name": appointment.pet_name,
-            "type": appointment.type,
-            "date": appointment.date.isoformat(),
-            "location": appointment.location,
-            "status": appointment.status,
-            "priority": appointment.priority,
-            "notes": appointment.notes,
-        }
-        for appointment in appointments
-    ]), 200
+        return jsonify({'message': 'Appointment added successfully'}), 201
 
 
    
