@@ -319,27 +319,35 @@ def create_appointment():
     user_id = get_jwt_identity()  # Get current user ID
     data = request.get_json()
 
-    # Validate pet_name
+    # Validate required fields
     pet_name = data.get('pet_name')
     if not pet_name:
         return jsonify({'message': 'Pet name is required'}), 400
 
+    try:
+        # Parse date and ensure it's valid
+        date = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S')
+    except (KeyError, ValueError):
+        return jsonify({'message': 'Invalid or missing date. Use format "YYYY-MM-DDTHH:MM:SS"'}), 400
+
     # Create the appointment
     new_appointment = Appointment(
-        id=str(uuid4()),  # Generate unique ID
+        id=str(uuid.uuid4()),  # Generate unique ID
         user_id=user_id,
-        pet_name=pet_name,  # Include pet_name
+        pet_name=pet_name,
         type=data['type'],
-        date=datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S'),
-        location=data.get('vet'),  # Assuming "vet" as location
-        status="Pending",
+        date=date,
+        location=data.get('location', 'Unknown'),  # Default to "Unknown" if location is missing
+        status=data.get('status', 'Pending'),  # Default to "Pending"
         priority=data.get('priority'),
         notes=data.get('notes'),
     )
+
     db.session.add(new_appointment)
     db.session.commit()
 
     return jsonify({'message': 'Appointment created successfully'}), 201
+
 
 
 @app.route('/Appointment', methods=['GET'])
@@ -350,45 +358,19 @@ def get_appointments():
     return jsonify([
         {
             "id": appointment.id,
-            "pet_name": appointment.pet_name,  # Include pet_name
+            "pet_name": appointment.pet_name,
             "type": appointment.type,
             "date": appointment.date.isoformat(),
             "location": appointment.location,
             "status": appointment.status,
             "priority": appointment.priority,
-            "notes": appointment.notes
+            "notes": appointment.notes,
         }
         for appointment in appointments
     ]), 200
 
-    if request.method == 'POST':
-        data = request.get_json()
 
-        appointment_id = str(uuid.uuid4())
-        user_id = get_jwt_identity()
-        pet_id = data['pet_id']
-        type_ = data['type']
-        date = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S')  
-        location = data['location']
-        status = data['status']
-        priority = data.get('priority') 
-        notes = data.get('notes') 
-
-        appointment = Appointment(
-            id=appointment_id,
-            user_id=user_id,
-            pet_id=pet_id,
-            type=type_,
-            date=date,
-            location=location,
-            status=status,
-            priority=priority,
-            notes=notes
-        )
-        db.session.add(appointment)
-        db.session.commit()
-
-        return jsonify({'message': 'Appointment added successfully'}), 201
+   
 
 @app.route('/Appointment/<appointment_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
