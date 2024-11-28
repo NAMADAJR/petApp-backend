@@ -40,7 +40,7 @@ allowed_origins = [
 
 cors = CORS(app, resources={
     r"/*": {
-        "origins": allowed_origins
+        "origins": "*"
     }
 })
 jwt = JWTManager(app)
